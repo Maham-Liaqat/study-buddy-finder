@@ -1,80 +1,125 @@
 const express = require('express');
-   const router = express.Router();
-   const jwt = require('jsonwebtoken');
-   const mongoose = require('mongoose');
+const router = express.Router();
+const mongoose = require('mongoose');
+const { Request, User } = require('../models');
+const verifyTokenMiddleware = require('../middleware/verifyToken');
 
-   const RequestSchema = new mongoose.Schema({
-     senderId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-     recipientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-     senderName: String,
-     message: String,
-     status: { type: String, default: 'pending' },
-     createdAt: { type: Date, default: Date.now },
-   });
+// Get all sent and received requests
+router.get('/', verifyTokenMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.userId;
 
-   const Request = mongoose.model('Request', RequestSchema);
+    // Fetch all requests where the user is either the sender or recipient
+    const requests = await Request.find({
+      $or: [
+        { senderId: userId },
+        { recipientId: userId },
+      ],
+    }).sort({ createdAt: -1 });
 
-   router.post('/', async (req, res) => {
-     const token = req.headers.authorization?.split(' ')[1];
-     if (!token) return res.status(401).json({ error: 'No token provided' });
+    // Populate sender and recipient details
+    const populatedRequests = await Promise.all(requests.map(async (request) => {
+      const sender = await User.findById(request.senderId).select('name');
+      const recipient = await User.findById(request.recipientId).select('name');
+      return {
+        ...request._doc,
+        senderName: sender?.name || 'Unknown',
+        recipientName: recipient?.name || 'Unknown',
+        isSent: request.senderId.toString() === userId.toString(),
+      };
+    }));
 
-     try {
-       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-       const { recipientId, message } = req.body;
-       const sender = await mongoose.model('User').findById(decoded.userId);
-       if (!sender) return res.status(404).json({ error: 'Sender not found' });
+    res.json(populatedRequests);
+  } catch (err) {
+    console.error('Get requests error:', err.message, err.stack);
+    res.status(500).json({ error: 'Failed to fetch requests' });
+  }
+});
 
-       const request = new Request({
-         senderId: decoded.userId,
-         recipientId,
-         senderName: sender.name,
-         message,
-       });
-       await request.save();
-       res.status(201).json({ message: 'Request sent' });
-     } catch (err) {
-       res.status(400).json({ error: err.message });
-     }
-   });
+// Send a request
+router.post('/', verifyTokenMiddleware, async (req, res) => {
+  const { recipientId, message } = req.body;
+  try {
+    const senderId = req.user.userId;
 
-   router.get('/', async (req, res) => {
-     const token = req.headers.authorization?.split(' ')[1];
-     if (!token) return res.status(401).json({ error: 'No token provided' });
+    // Validate recipientId
+    if (!mongoose.isValidObjectId(recipientId)) {
+      return res.status(400).json({ error: 'Invalid recipientId format' });
+    }
 
-     try {
-       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-       const requests = await Request.find({
-         recipientId: decoded.userId,
-         status: 'pending',
-       });
-       res.json(requests);
-     } catch (err) {
-       res.status(401).json({ error: 'Invalid token' });
-     }
-   });
+    if (senderId === recipientId) {
+      return res.status(400).json({ error: 'Cannot send request to yourself' });
+    }
 
-   router.patch('/:id', async (req, res) => {
-     const token = req.headers.authorization?.split(' ')[1];
-     if (!token) return res.status(401).json({ error: 'No token provided' });
+    const existingRequest = await Request.findOne({
+      senderId,
+      recipientId,
+      status: 'pending',
+    });
+    if (existingRequest) {
+      return res.status(400).json({ error: 'Request already sent' });
+    }
 
-     try {
-       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-       const { action } = req.body;
-       const request = await Request.findById(req.params.id);
-       if (!request || request.recipientId.toString() !== decoded.userId) {
-         return res.status(404).json({ error: 'Request not found' });
-       }
+    const request = new Request({ senderId, recipientId, message });
+    await request.save();
 
-       if (action === 'accept') {
-         request.status = 'accepted';
-       } else if (action === 'decline') {
-         request.status = 'declined';
-       }
-       await request.save();
-       res.json({ message: `Request ${action}ed` });
-     } catch (err) {
-       res.status(400).json({ error: err.message });
-     }
-   });
+    res.status(201).json({ message: 'Request sent successfully' });
+  } catch (err) {
+    console.error('Send request error:', err.message, err.stack);
+    res.status(500).json({ error: 'Failed to send request' });
+  }
+});
 
-   module.exports = router;
+// Accept a request
+router.patch('/:id/accept', verifyTokenMiddleware, async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+
+    if (request.recipientId.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Not authorized to accept this request' });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({ error: 'Request is not pending' });
+    }
+
+    request.status = 'accepted';
+    await request.save();
+
+    res.json({ message: 'Request accepted successfully' });
+  } catch (err) {
+    console.error('Accept request error:', err.message, err.stack);
+    res.status(500).json({ error: 'Failed to accept request' });
+  }
+});
+
+// Reject a request
+router.patch('/:id/reject', verifyTokenMiddleware, async (req, res) => {
+  try {
+    const request = await Request.findById(req.params.id);
+    if (!request) {
+      return res.status(404).json({ error: 'Request not found' });
+    }
+
+    if (request.recipientId.toString() !== req.user.userId) {
+      return res.status(403).json({ error: 'Not authorized to reject this request' });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({ error: 'Request is not pending' });
+    }
+
+    request.status = 'rejected';
+    await request.save();
+
+    res.json({ message: 'Request rejected successfully' });
+  } catch (err) {
+    console.error('Reject request error:', err.message, err.stack);
+    res.status(500).json({ error: 'Failed to reject request' });
+  }
+});
+
+module.exports = router;

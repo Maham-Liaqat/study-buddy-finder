@@ -1,37 +1,61 @@
 import React from 'react';
-   import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-   import Navbar from './components/Navbar';
-   import Home from './pages/Home';
-   import SignUp from './pages/SignUp';
-   import Login from './pages/Login';
-   import Dashboard from './pages/Dashboard';
-   import Profile from './pages/Profile';
-   import Matches from './pages/Matches';
-   import Requests from './pages/Requests';
-   import Chat from './pages/Chat';
-   import Notifications from './pages/Notifications';
-   import Search from './pages/Search';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ToastProvider } from './components/ToastContext';
+import { AuthProvider, AuthContext } from './context/AuthContext';
+import ErrorBoundary from './components/ErrorBoundary';
+import Home from './components/Home';
+import Login from './components/Login';
+import Signup from './pages/Signup';
+import ProtectedRoute from './components/ProtectedRoute';
+import Dashboard from './components/Dashboard';
+import Profile from './components/Profile';
+import Search from './components/Search';
+import Requests from './components/Requests';
+import Matches from './components/Matches';
+import Chat from './components/Chat';
+import Notifications from './pages/Notifications';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
+import Navbar from './components/Navbar';
 
-   function App() {
-     return (
-       <Router>
-         <div className="min-h-screen bg-gray-100">
-           <Navbar />
-           <Routes>
-             <Route path="/" element={<Home />} />
-             <Route path="/signup" element={<SignUp />} />
-             <Route path="/login" element={<Login />} />
-             <Route path="/dashboard" element={<Dashboard />} />
-             <Route path="/profile" element={<Profile />} />
-             <Route path="/matches" element={<Matches />} />
-             <Route path="/requests" element={<Requests />} />
-             <Route path="/chat" element={<Chat />} />
-             <Route path="/notifications" element={<Notifications />} />
-             <Route path="/search" element={<Search />} />
-           </Routes>
-         </div>
-       </Router>
-     );
-   }
+const App = () => {
+  return (
+    <ErrorBoundary>
+      <ToastProvider>
+        <AuthProvider>
+          <AuthContext.Consumer>
+            {({ token, loading }) => (
+              <Router>
+                <>
+                  <Navbar />
+                  {loading ? (
+                    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+                      <p className="text-lg text-gray-900">Loading...</p>
+                    </div>
+                  ) : (
+                    <Routes>
+                      <Route path="/" element={<Home />} />
+                      <Route path="/login" element={token ? <Navigate to="/dashboard" /> : <Login />} />
+                      <Route path="/signup" element={token ? <Navigate to="/dashboard" /> : <Signup />} />
+                      <Route path="/dashboard" element={token ? <Dashboard /> : <Navigate to="/login" />} />
+                      <Route path="/profile" element={token ? <Profile /> : <Navigate to="/login" />} />
+                      <Route path="/search" element={token ? <Search /> : <Navigate to="/login" />} />
+                      <Route path="/requests" element={token ? <Requests /> : <Navigate to="/login" />} />
+                      <Route path="/matches" element={token ? <Matches /> : <Navigate to="/login" />} />
+                      <Route path="/chat/:recipientId?" element={token ? <Chat /> : <Navigate to="/login" />} />
+                      <Route path="/notifications" element={token ? <Notifications /> : <Navigate to="/login" />} />
+                      <Route path="/forgot-password" element={<ForgotPassword />} />
+                      <Route path="/reset-password/:token" element={<ResetPassword />} />
+                    </Routes>
+                  )}
+                </>
+              </Router>
+            )}
+          </AuthContext.Consumer>
+        </AuthProvider>
+      </ToastProvider>
+    </ErrorBoundary>
+  );
+};
 
-   export default App;
+export default App;

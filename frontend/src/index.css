@@ -1,1 +1,28 @@
 @import "tailwindcss";
+
+/* Add to your existing index.css or App.css */
+@keyframes slide-in {
+    from {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  
+  .animate-slide-in {
+    animation: slide-in 0.3s ease-out;
+  }
+
+  :root {
+    --primary-bg: #111827; /* bg-gray-900 */
+    --input-bg: #4b5563; /* bg-gray-700 */
+    --button-bg: #14b8a6; /* bg-teal-500 */
+    --button-hover-bg: #0d9488; /* bg-teal-600 */
+    --link-color: #5eead4; /* text-teal-300 */
+    --error-color: #f87171; /* text-red-400 */
+    --heading-size: 2.25rem; /* text-4xl */
+    --text-size: 1.125rem; /* text-lg */
+  }

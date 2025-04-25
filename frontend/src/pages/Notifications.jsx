@@ -1,113 +1,138 @@
-import React, { useState, useEffect } from 'react';
-   import axios from 'axios';
-   import { Link } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import axios from '../axios';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../components/ToastContext';
+import { io } from 'socket.io-client';
+import { jwtDecode } from 'jwt-decode';
+import { motion, AnimatePresence } from 'framer-motion';
 
-   const Notifications = () => {
-     const [notifications, setNotifications] = useState([]);
-     const [error, setError] = useState('');
-     const token = localStorage.getItem('token');
+const Notifications = () => {
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const token = localStorage.getItem('token');
+  const navigate = useNavigate();
+  const { addToast } = useToast();
+  const socketRef = useRef(null);
 
-     useEffect(() => {
-       const fetchNotifications = async () => {
-         if (!token) {
-           setError('Please log in.');
-           return;
-         }
-         try {
-           setError('');
-           const [requestsRes, messagesRes] = await Promise.all([
-             axios.get('http://localhost:5000/api/requests', {
-               headers: { Authorization: `Bearer ${token}` },
-             }),
-             axios.get('http://localhost:5000/api/messages/recent', {
-               headers: { Authorization: `Bearer ${token}` },
-             }),
-           ]);
-           const pendingRequests = requestsRes.data
-             .filter((req) => req.status === 'pending')
-             .map((req) => ({
-               id: req._id,
-               type: 'request',
-               message: `${req.senderName} sent you a connection request`,
-               createdAt: req.createdAt,
-             }));
-           const recentMessages = messagesRes.data.map((msg) => ({
-             id: msg._id,
-             type: 'message',
-             message: `New message from ${msg.senderName}`,
-             createdAt: msg.timestamp,
-           }));
-           setNotifications([...pendingRequests, ...recentMessages].sort(
-             (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-           ));
-         } catch (err) {
-           setError('Failed to fetch notifications.');
-           console.error(err);
-         }
-       };
-       fetchNotifications();
-     }, [token]);
+  useEffect(() => {
+    if (!token) {
+      setError('Please log in.');
+      setLoading(false);
+      navigate('/login');
+      return;
+    }
 
-     const handleAction = async (id, action) => {
-       try {
-         await axios.patch(
-           `http://localhost:5000/api/requests/${id}`,
-           { action },
-           { headers: { Authorization: `Bearer ${token}` } }
-         );
-         setNotifications(notifications.filter((notif) => notif.id !== id));
-       } catch (err) {
-         setError('Failed to process request.');
-         console.error(err);
-       }
-     };
+    const decoded = jwtDecode(token);
+    const userId = decoded.userId;
 
-     return (
-       <div className="container mx-auto p-6 min-h-screen bg-gray-100">
-         <div className="bg-black text-white p-8 rounded-xl shadow-lg">
-           <h1 className="text-3xl font-bold mb-6">Notifications</h1>
-           {error && <p className="text-red-500 mb-4">{error}</p>}
-           {notifications.length ? (
-             <div className="space-y-4">
-               {notifications.map((notif) => (
-                 <div key={notif.id} className="bg-gray-800 p-4 rounded-lg">
-                   <p className="text-gray-300">{notif.message}</p>
-                   <p className="text-xs text-gray-400">
-                     {new Date(notif.createdAt).toLocaleString()}
-                   </p>
-                   {notif.type === 'request' && (
-                     <div className="flex gap-4 mt-3">
-                       <button
-                         onClick={() => handleAction(notif.id, 'accept')}
-                         className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-200 transition"
-                       >
-                         Accept
-                       </button>
-                       <button
-                         onClick={() => handleAction(notif.id, 'decline')}
-                         className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition"
-                       >
-                         Decline
-                       </button>
-                     </div>
-                   )}
-                   {notif.type === 'message' && (
-                     <Link
-                       to="/chat"
-                       className="mt-3 inline-block px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-200 transition"
-                     >
-                       View Message
-                     </Link>
-                   )}
-                 </div>
-               ))}
-             </div>
-           ) : (
-             <p className="text-gray-300">No notifications.</p>
-           )}
-         </div>
-       </div>
-     );
-   };
+    socketRef.current = io('http://localhost:5001', {
+      query: { userId },
+    });
 
-   export default Notifications;
+    socketRef.current.on('connect', () => {
+      console.log('Connected to Socket.IO server for notifications');
+      socketRef.current.emit('join', userId);
+    });
+
+    socketRef.current.on('newNotification', (notification) => {
+      setNotifications((prev) => [notification, ...prev]);
+    });
+
+    return () => {
+      socketRef.current.off('newNotification');
+      socketRef.current.disconnect();
+    };
+  }, [token, navigate]);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      if (!token) return;
+
+      try {
+        setLoading(true);
+        const res = await axios.get('/api/notifications', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setNotifications(res.data);
+      } catch (err) {
+        if (err.response?.status === 401) {
+          localStorage.removeItem('token');
+          setError('Session expired. Redirecting to login...');
+          addToast('Session expired. Redirecting to login...', 'error');
+          setTimeout(() => navigate('/login'), 3000);
+        } else {
+          const errorMessage = err.response?.data?.error || 'Failed to fetch notifications.';
+          setError(errorMessage);
+          addToast(errorMessage, 'error');
+          console.error('Fetch notifications error:', err.message, err.response?.data);
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchNotifications();
+  }, [token, navigate, addToast]);
+
+  const handleNotificationClick = (notification) => {
+    if (notification.type === 'message') {
+      navigate(`/chat/${notification.relatedUserId._id || notification.relatedUserId}`);
+    }
+  };
+
+  if (loading) return <div className="container mx-auto p-6 min-h-screen bg-gray-100"><p className="text-lg text-gray-900">Loading notifications...</p></div>;
+  if (error) return <div className="container mx-auto p-6 min-h-screen bg-gray-100"><p className="text-red-400 text-lg">{error}</p></div>;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 50 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="container mx-auto p-6 min-h-screen bg-gray-100"
+    >
+      <motion.h1
+        initial={{ y: -50, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+        className="text-4xl font-bold mb-6 text-gray-900"
+      >
+        Notifications
+      </motion.h1>
+      {notifications.length ? (
+        <div className="space-y-4">
+          <AnimatePresence>
+            {notifications.map((notification, index) => (
+              <motion.div
+                key={notification._id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.3, delay: index * 0.1 }}
+                onClick={() => handleNotificationClick(notification)}
+                className={`p-4 rounded-lg cursor-pointer ${
+                  notification.read ? 'bg-gray-200' : 'bg-white shadow-lg'
+                } hover:bg-gray-100 transition`}
+              >
+                <p className="text-lg text-gray-900">{notification.message}</p>
+                <p className="text-sm text-gray-500">
+                  {new Date(notification.createdAt).toLocaleString()}
+                </p>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      ) : (
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.5 }}
+          className="text-lg text-gray-500"
+        >
+          No notifications yet.
+        </motion.p>
+      )}
+    </motion.div>
+  );
+};
+
+export default Notifications;
