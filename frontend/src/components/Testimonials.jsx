@@ -2,32 +2,32 @@ import React, { useState, useEffect } from 'react';
 
 const testimonials = [
   {
-    name: 'Emily Chen',
-    university: 'Stanford University',
+    name: 'Aleeha Zainab',
+    university: 'LCWU',
     image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&w=256&h=256&facepad=2',
     quote: "Study Buddy Finder helped me connect with amazing peers. My grades and confidence have improved so much!"
   },
   {
-    name: 'Ahmed Khan',
-    university: 'MIT',
+    name: 'Ayesha Khan',
+    university: 'PUCIT',
     image: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=facearea&w=256&h=256&facepad=2',
     quote: "I found the perfect study group for my computer science course. The sessions are fun and super helpful!"
   },
   {
     name: 'Priya Patel',
-    university: 'University of Oxford',
+    university: 'NUST',
     image: 'https://images.unsplash.com/photo-1465101046530-73398c7f28ca?auto=format&fit=facearea&w=256&h=256&facepad=2',
     quote: "I love how easy it is to find study partners for any subject. The community is so supportive!"
   },
   {
-    name: 'Lucas Smith',
-    university: 'University of Toronto',
+    name: 'Lina Ahmad',
+    university: 'LCWU',
     image: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=facearea&w=256&h=256&facepad=2',
     quote: "The virtual study sessions fit my schedule perfectly. I've made friends from all over the world!"
   },
   {
     name: 'Fatima Al-Mansouri',
-    university: 'National University of Singapore',
+    university: 'NUST',
     image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=facearea&w=256&h=256&facepad=2',
     quote: "Thanks to Study Buddy Finder, I never feel lost before exams. Highly recommended!"
   }
