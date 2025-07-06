@@ -39,40 +39,37 @@ const Login = () => {
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="flex items-center justify-center min-h-screen bg-gray-100"
+      className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-lavender-100"
     >
       <motion.div
         initial={{ scale: 0.95 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.3 }}
-        className="bg-gray-800 text-white p-8 rounded-xl shadow-lg w-full max-w-md"
+        className="bg-white text-blue-900 p-8 rounded-2xl shadow-2xl w-full max-w-md border border-blue-100"
+        style={{ fontFamily: 'Inter, Segoe UI, Roboto, Arial, sans-serif' }}
       >
-        <h2 className="text-3xl font-bold mb-6 text-center">Login</h2>
+        <h2 className="text-3xl font-extrabold mb-6 text-center text-blue-700">Login</h2>
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="email" className="block text-lg mb-2">
-              Email
-            </label>
+            <label htmlFor="email" className="block text-lg mb-2 font-semibold">Email</label>
             <input
               type="email"
               id="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full p-3 bg-blue-50 text-blue-900 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
               placeholder="Enter your email"
               required
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-lg mb-2">
-              Password
-            </label>
+            <label htmlFor="password" className="block text-lg mb-2 font-semibold">Password</label>
             <input
               type="password"
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:outline-none focus:ring-2 focus:ring-teal-500"
+              className="w-full p-3 bg-blue-50 text-blue-900 rounded-lg border border-blue-200 focus:outline-none focus:ring-2 focus:ring-blue-300"
               placeholder="Enter your password"
               required
             />
@@ -81,22 +78,18 @@ const Login = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             type="submit"
-            className="w-full p-3 bg-teal-500 text-white rounded-lg hover:bg-teal-600 transition"
+            className="w-full p-3 rounded-lg font-bold text-white shadow-md transition bg-gradient-to-r from-blue-400 to-purple-400 hover:from-blue-500 hover:to-purple-500"
           >
             Login
           </motion.button>
         </form>
         <div className="mt-6 text-center">
-          <Link to="/forgot-password" className="text-teal-400 hover:underline">
-            Forgot Password?
-          </Link>
+          <Link to="/forgot-password" className="text-blue-500 hover:underline font-semibold">Forgot Password?</Link>
         </div>
         <div className="mt-2 text-center">
-          <p className="text-gray-400">
+          <p className="text-blue-400">
             Don't have an account?{' '}
-            <Link to="/signup" className="text-teal-400 hover:underline">
-              Sign Up
-            </Link>
+            <Link to="/signup" className="text-purple-500 hover:underline font-semibold">Sign Up</Link>
           </p>
         </div>
       </motion.div>

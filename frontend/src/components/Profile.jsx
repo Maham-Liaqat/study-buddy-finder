@@ -5,8 +5,6 @@ import { useNavigate } from 'react-router-dom';
 import { useToast } from '../components/ToastContext';
 import { motion } from 'framer-motion';
 
-const BACKEND_URL = 'http://localhost:5001';
-
 const Profile = () => {
   const [formData, setFormData] = useState({
     name: '',
@@ -18,7 +16,6 @@ const Profile = () => {
     avatar: '',
   });
   const [newSubject, setNewSubject] = useState('');
-  const [avatarFile, setAvatarFile] = useState(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem('token');
@@ -39,11 +36,6 @@ const Profile = () => {
       setLoading(true);
       const res = await axios.get('/api/users/me');
       console.log('User data from /api/users/me:', res.data);
-      const avatarFilename = res.data.avatar;
-      const avatarUrl = avatarFilename && typeof avatarFilename === 'string'
-        ? `${BACKEND_URL}/uploads/avatars/${avatarFilename}?t=${Date.now()}`
-        : 'https://via.placeholder.com/40?text=User';
-      console.log('Fetched avatar URL:', avatarUrl);
       setFormData({
         name: res.data.name || '',
         university: res.data.university || '',
@@ -51,7 +43,7 @@ const Profile = () => {
         location: res.data.location || '',
         subjects: res.data.subjects || [],
         availability: res.data.availability || [],
-        avatar: avatarUrl,
+        avatar: res.data.avatar || '',
       });
     } catch (err) {
       if (err.response?.status === 401) {
@@ -108,55 +100,10 @@ const Profile = () => {
     });
   };
 
-  const handleAvatarChange = (e) => {
-    setAvatarFile(e.target.files[0]);
-  };
-
-  const handleAvatarUpload = async (e) => {
-    e.preventDefault();
-    if (!avatarFile) {
-      addToast('Please select an image to upload.', 'error');
-      return;
-    }
-
-    const uploadData = new FormData();
-    uploadData.append('avatar', avatarFile);
-    console.log('Uploading avatar file:', avatarFile.name);
-
-    try {
-      const res = await axios.post('/api/users/avatar', uploadData);
-      console.log('Avatar upload response:', res.data);
-      const avatarFilename = res.data.avatar;
-      const newAvatarUrl = avatarFilename && typeof avatarFilename === 'string'
-        ? `${BACKEND_URL}/uploads/avatars/${avatarFilename}?t=${Date.now()}`
-        : 'https://via.placeholder.com/40?text=User';
-      console.log('New avatar URL after upload:', newAvatarUrl);
-      setFormData((prev) => ({ ...prev, avatar: newAvatarUrl }));
-      addToast(res.data.message, 'success');
-      await fetchUser();
-    } catch (err) {
-      if (err.response?.status === 401) {
-        localStorage.removeItem('token');
-        setError('Session expired. Redirecting to login...');
-        addToast('Session expired. Redirecting to login...', 'error');
-        setTimeout(() => navigate('/login'), 3000);
-      } else {
-        const errorMessage = err.response?.data?.error || 'Failed to upload avatar.';
-        addToast(errorMessage, 'error');
-        console.error('Avatar upload error:', err.message, err.response?.data);
-      }
-    }
-  };
-
-  const handleAvatarError = (e) => {
-    console.error('Avatar failed to load, reverting to placeholder:', formData.avatar);
-    e.target.src = 'https://via.placeholder.com/40?text=User';
-    e.target.onerror = null;
-  };
-
   const handleSubmit = async () => {
     try {
       setError('');
+      
       const res = await axios.patch('/api/users/me', {
         name: formData.name,
         university: formData.university,
@@ -164,13 +111,13 @@ const Profile = () => {
         location: formData.location,
         subjects: formData.subjects,
         availability: formData.availability,
-      });
+      });          
       console.log('Profile update response:', res.data);
       const successMessage = res.data.message || 'Profile updated successfully!';
       addToast(successMessage, 'success');
-    } catch (err) {
+    } catch (err) {     
       if (err.response?.status === 401) {
-        localStorage.removeItem('token');
+        localStorage.removeItem('token'); 
         setError('Session expired. Redirecting to login...');
         addToast('Session expired. Redirecting to login...', 'error');
         setTimeout(() => navigate('/login'), 3000);
@@ -185,22 +132,22 @@ const Profile = () => {
     }
   };
 
-  if (loading) return <div className="container mx-auto p-6 min-h-screen bg-gray-100"><p className="text-lg text-gray-900">Loading profile...</p></div>;
-  if (error && !formData.name) return <div className="container mx-auto p-6 min-h-screen bg-gray-100"><p className="text-red-400 text-lg">{error}</p></div>;
+  if (loading) return <div className="container mx-auto p-6 min-h-screen bg-gradient-to-br from-blue-50 via-white to-lavender-100"><p className="text-lg text-blue-900">Loading profile...</p></div>;
+  if (error && !formData.name) return <div className="container mx-auto p-6 min-h-screen bg-gradient-to-br from-blue-50 via-white to-lavender-100"><p className="text-red-400 text-lg">{error}</p></div>;
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="container mx-auto p-6 min-h-screen bg-gray-100"
+      className="container mx-auto mt-20 p-10 min-h-screen bg-gradient-to-br from-blue-50 via-white to-lavender-100"
     >
-      <div className="bg-gray-900 text-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
+      <div className="bg-white text-blue-900 p-8 rounded-2xl shadow-2xl max-w-2xl mx-auto border border-blue-100">
         <motion.h1
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-4xl font-bold mb-6"
+          className="text-4xl font-extrabold mb-6 text-blue-700"
         >
           My Profile
         </motion.h1>
@@ -213,36 +160,14 @@ const Profile = () => {
             {error}
           </motion.p>
         )}
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.5 }}
-          className="flex flex-col items-center mb-6"
-        >
-          <img
-            src={formData.avatar}
-            alt="User avatar"
-            className="w-24 h-24 rounded-full mb-4"
-            onError={handleAvatarError}
-          />
-          <form onSubmit={handleAvatarUpload} className="flex flex-col items-center">
-            <input
-              type="file"
-              accept="image/jpeg,image/jpg,image/png"
-              onChange={handleAvatarChange}
-              className="mb-4 text-lg text-white"
-            />
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              type="submit"
-              className="px-4 py-2 bg-teal-500 text-white text-lg rounded-lg hover:bg-teal-600 transition"
-            >
-              Upload Avatar
-            </motion.button>
-          </form>
-        </motion.div>
         <div className="flex flex-col gap-4">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
+            className="flex flex-col items-center gap-2"
+          >
+          </motion.div>
           <motion.div
             initial={{ x: -50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -254,7 +179,7 @@ const Profile = () => {
               value={formData.name}
               onChange={handleChange}
               placeholder="Full Name"
-              className="p-3 bg-gray-700 text-white text-lg border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 w-full"
+              className="p-3 bg-blue-50 text-blue-900 text-lg border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
             />
           </motion.div>
           <motion.div
@@ -268,7 +193,7 @@ const Profile = () => {
               value={formData.university}
               onChange={handleChange}
               placeholder="University"
-              className="p-3 bg-gray-700 text-white text-lg border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 w-full"
+              className="p-3 bg-blue-50 text-blue-900 text-lg border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
             />
           </motion.div>
           <motion.div
@@ -281,7 +206,7 @@ const Profile = () => {
               value={formData.bio}
               onChange={handleChange}
               placeholder="Bio"
-              className="p-3 bg-gray-700 text-white text-lg border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 w-full"
+              className="p-3 bg-blue-50 text-blue-900 text-lg border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
               rows="4"
             />
           </motion.div>
@@ -295,8 +220,8 @@ const Profile = () => {
               name="location"
               value={formData.location}
               onChange={handleChange}
-              placeholder="Location (e.g., New York)"
-              className="p-3 bg-gray-700 text-white text-lg border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 w-full"
+              placeholder="Location"
+              className="p-3 bg-blue-50 text-blue-900 text-lg border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
             />
           </motion.div>
           <motion.div
@@ -309,14 +234,15 @@ const Profile = () => {
               type="text"
               value={newSubject}
               onChange={(e) => setNewSubject(e.target.value)}
-              placeholder="Add Subject (e.g., Calculus)"
-              className="flex-1 p-3 bg-gray-700 text-white text-lg border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+              placeholder="Add Subject"
+              className="p-3 bg-blue-50 text-blue-900 text-lg border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
             />
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={handleAddSubject}
-              className="px-4 py-3 bg-teal-500 text-white text-lg rounded-lg hover:bg-teal-600 transition"
+              className="px-4 py-2 bg-gradient-to-r from-blue-400 to-purple-400 text-white font-bold rounded-lg hover:from-blue-500 hover:to-purple-500 transition"
+              type="button"
             >
               Add
             </motion.button>
@@ -327,15 +253,13 @@ const Profile = () => {
             transition={{ delay: 0.9, duration: 0.5 }}
             className="flex flex-wrap gap-2"
           >
-            {formData.subjects.map((subject, index) => (
-              <span
-                key={index}
-                className="bg-gray-600 text-white text-lg px-3 py-1 rounded-lg flex items-center"
-              >
+            {formData.subjects.map((subject, idx) => (
+              <span key={idx} className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm flex items-center">
                 {subject.name}
                 <button
-                  onClick={() => handleRemoveSubject(index)}
-                  className="ml-2 text-red-400"
+                  onClick={() => handleRemoveSubject(idx)}
+                  className="ml-2 text-blue-400 hover:text-red-400 font-bold"
+                  type="button"
                 >
                   ×
                 </button>
@@ -364,9 +288,9 @@ const Profile = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={handleSubmit}
-            className="px-6 py-3 bg-teal-500 text-white text-lg rounded-lg hover:bg-teal-600 transition"
+            className="mt-4 px-6 py-3 bg-gradient-to-r from-blue-400 to-purple-400 text-white font-bold rounded-lg hover:from-blue-500 hover:to-purple-500 transition"
           >
-            Save Profile
+            Save
           </motion.button>
         </div>
       </div>

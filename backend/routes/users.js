@@ -1,47 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const { User, Request } = require('../models');
 const verifyTokenMiddleware = require('../middleware/verifyToken');
+const { body, validationResult } = require('express-validator');
+const nodemailer = require('nodemailer');
+const helmet = require('helmet');
 
-// Set up multer for file uploads
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/avatars/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-    const ext = path.extname(file.originalname);
-    cb(null, `${req.user.userId}-${uniqueSuffix}${ext}`);
-  },
-});
+router.use(helmet());
 
-const upload = multer({
-  storage,
-  fileFilter: (req, file, cb) => {
-    const filetypes = /jpeg|jpg|png/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
-    if (extname && mimetype) {
-      return cb(null, true);
-    }
-    cb(new Error('Only images (jpeg, jpg, png) are allowed'));
-  },
-});
+router.post('/signup', [
+  body('name').trim().notEmpty().withMessage('Name is required'),
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+  body('university').trim().notEmpty().withMessage('University is required'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
 
-const fs = require('fs');
-const uploadDir = path.join(__dirname, '../uploads/avatars');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
-
-router.use('/uploads', express.static(path.join(__dirname, '../uploads')));
-
-router.post('/signup', async (req, res) => {
   const { name, email, password, university } = req.body;
   try {
     const existingUser = await User.findOne({ email });
@@ -60,7 +40,15 @@ router.post('/signup', async (req, res) => {
   }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', [
+  body('email').isEmail().withMessage('Valid email is required'),
+  body('password').notEmpty().withMessage('Password is required'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   const { email, password } = req.body;
   try {
     const user = await User.findOne({ email });
@@ -99,10 +87,21 @@ router.get('/me', verifyTokenMiddleware, async (req, res) => {
   }
 });
 
-router.patch('/me', verifyTokenMiddleware, async (req, res) => {
+router.patch('/me', [
+  body('name').optional().trim(),
+  body('university').optional().trim(),
+  body('bio').optional().trim(),
+  body('location').optional().trim(),
+  body('subjects').optional().isArray(),
+  body('availability').optional().isArray(),
+], verifyTokenMiddleware, async (req, res) => {
   if (!req.user || !req.user.userId) {
     console.log('PATCH /api/users/me - Authentication failed: req.user is undefined or missing userId');
     return res.status(401).json({ error: 'Authentication failed: No user data found' });
+  }
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
   }
 
   const updates = req.body;
@@ -140,31 +139,6 @@ router.patch('/me', verifyTokenMiddleware, async (req, res) => {
   }
 });
 
-// Upload avatar
-router.post('/avatar', verifyTokenMiddleware, upload.single('avatar'),async (req, res) => {
-  if (!req.user || !req.user.userId) {
-    console.log('POST /api/users/avatar - Authentication failed: req.user is undefined or missing userId');
-    return res.status(401).json({ error: 'Authentication failed: No user data found' });
-  }
-
-  try {
-    if (!req.file) {
-      return res.status(400).json({ error: 'No file uploaded' });
-    }
-    const user = await User.findById(req.user.userId);
-    if (!user) {
-      return res.status(404).json({ error: 'User not found' });
-    }
-    user.avatar = req.file.filename;
-    await user.save();
-    console.log('Uploaded avatar filename:', req.file.filename);
-    res.json({ message: 'Avatar uploaded successfully', avatar: req.file.filename });
-  } catch (err) {
-    console.error('Avatar upload error:', err.message, err.stack);
-    res.status(500).json({ error: 'Failed to upload avatar' });
-  }
-}, upload.single('avatar'));
-
 router.get('/search', verifyTokenMiddleware, async (req, res) => {
   if (!req.user || !req.user.userId) {
     console.log('GET /api/users/search - Authentication failed: req.user is undefined or missing userId');
@@ -175,34 +149,64 @@ router.get('/search', verifyTokenMiddleware, async (req, res) => {
     const currentUser = await User.findById(req.user.userId);
     if (!currentUser) return res.status(404).json({ error: 'User not found' });
 
-    const { subject, availability, location } = req.query;
+    const { subject, availability, location, skills, badges } = req.query;
     const query = { _id: { $ne: req.user.userId } };
 
-    if (subject) query['subjects.name'] = subject;
-    if (availability) query.availability = availability;
+    if (subject) query['subjects.name'] = { $in: subject.split(',') };
+    if (availability) query.availability = { $in: availability.split(',') };
     if (location) query.location = location;
+    if (skills) query.skills = { $in: skills.split(',') };
+    if (badges) query.badges = { $in: badges.split(',') };
 
     const users = await User.find(query).select('-password');
-    console.log('Search results - Users with avatars:', users.map(u => ({ id: u._id, avatar: u.avatar })));
 
     const usersWithMatch = users.map(user => {
       let matchScore = 0;
-      const maxScore = 3;
+      let matchBreakdown = [];
+      const maxScore = 5;
 
+      // Subjects
       const currentUserSubjects = currentUser.subjects?.map(s => s.name) || [];
       const userSubjects = user.subjects?.map(s => s.name) || [];
       const commonSubjects = currentUserSubjects.filter(s => userSubjects.includes(s));
-      if (commonSubjects.length > 0) matchScore += 1;
+      if (commonSubjects.length > 0) {
+        matchScore += 1;
+        matchBreakdown.push(`Shared subjects: ${commonSubjects.join(', ')}`);
+      }
 
+      // Availability
       const commonAvailability = currentUser.availability?.filter(day => user.availability?.includes(day)) || [];
-      if (commonAvailability.length > 0) matchScore += 1;
+      if (commonAvailability.length > 0) {
+        matchScore += 1;
+        matchBreakdown.push(`Overlapping availability: ${commonAvailability.join(', ')}`);
+      }
 
+      // Location
       if (currentUser.location && user.location && currentUser.location.toLowerCase() === user.location.toLowerCase()) {
         matchScore += 1;
+        matchBreakdown.push(`Same location: ${user.location}`);
+      }
+
+      // Skills
+      const currentUserSkills = currentUser.skills || [];
+      const userSkills = user.skills || [];
+      const commonSkills = currentUserSkills.filter(s => userSkills.includes(s));
+      if (commonSkills.length > 0) {
+        matchScore += 1;
+        matchBreakdown.push(`Shared skills: ${commonSkills.join(', ')}`);
+      }
+
+      // Badges
+      const currentUserBadges = currentUser.badges || [];
+      const userBadges = user.badges || [];
+      const commonBadges = currentUserBadges.filter(b => userBadges.includes(b));
+      if (commonBadges.length > 0) {
+        matchScore += 1;
+        matchBreakdown.push(`Shared badges: ${commonBadges.join(', ')}`);
       }
 
       const matchPercentage = Math.round((matchScore / maxScore) * 100);
-      return { ...user._doc, matchPercentage };
+      return { ...user._doc, matchPercentage, matchBreakdown };
     });
 
     res.json(usersWithMatch);
@@ -219,49 +223,82 @@ router.get('/matches', verifyTokenMiddleware, async (req, res) => {
       return res.status(401).json({ error: 'Authentication failed: No user data found' });
     }
 
-    console.log('GET /api/users/matches - Fetching matches for user:', req.user.userId);
-    if (!mongoose.isValidObjectId(req.user.userId)) {
-      console.error('Invalid userId format:', req.user.userId);
+    const userId = req.user.userId; // Store userId to preserve context
+    console.log('GET /api/users/matches - Fetching matches for user:', userId);
+    if (!mongoose.isValidObjectId(userId)) {
+      console.error('Invalid userId format:', userId);
       return res.status(400).json({ error: 'Invalid user ID format' });
     }
 
     const acceptedRequests = await Request.find({
       $or: [
-        { senderId: req.user.userId, status: 'accepted' },
-        { recipientId: req.user.userId, status: 'accepted' },
+        { senderId: userId, status: 'accepted' },
+        { recipientId: userId, status: 'accepted' },
       ],
     });
-    console.log('Accepted requests:', acceptedRequests);
+    console.log('Accepted requests found:', acceptedRequests.length);
+    console.log('Accepted requests:', JSON.stringify(acceptedRequests, null, 2));
+
+    if (!acceptedRequests || acceptedRequests.length === 0) {
+      console.log('No accepted requests found for user:', userId);
+      return res.json([]);
+    }
 
     const acceptedMatchIds = acceptedRequests
-      .filter(req => mongoose.isValidObjectId(req.senderId) && mongoose.isValidObjectId(req.recipientId))
-      .map(req =>
-        req.senderId.toString() === req.user.userId.toString() ? req.recipientId : req.senderId
-      );
-    console.log('Accepted match IDs:', acceptedMatchIds);
+      .filter(req => {
+        const isValidSender = mongoose.isValidObjectId(req.senderId);
+        const isValidRecipient = mongoose.isValidObjectId(req.recipientId);
+        if (!isValidSender || !isValidRecipient) {
+          console.warn('Invalid ObjectId in request:', {
+            requestId: req._id,
+            senderId: req.senderId,
+            recipientId: req.recipientId,
+          });
+        }
+        return isValidSender && isValidRecipient;
+      })
+      .map(req => {
+        const senderIdStr = req.senderId.toString();
+        const userIdStr = userId.toString();
+        const matchId = senderIdStr === userIdStr ? req.recipientId : req.senderId;
+        console.log('Mapping request to match ID:', {
+          requestId: req._id,
+          senderId: senderIdStr,
+          userId: userIdStr,
+          matchId,
+        });
+        return matchId;
+      });
 
     const pendingRequests = await Request.find({
-      senderId: req.user.userId,
+      senderId: userId,
       status: 'pending',
     });
-    console.log('Pending requests:', pendingRequests);
+    console.log('Pending requests found:', pendingRequests.length);
+    console.log('Pending requests:', JSON.stringify(pendingRequests, null, 2));
 
     const pendingMatchIds = pendingRequests
-      .filter(req => mongoose.isValidObjectId(req.recipientId))
+      .filter(req => {
+        const isValidRecipient = mongoose.isValidObjectId(req.recipientId);
+        if (!isValidRecipient) {
+          console.warn('Invalid recipientId in pending request:', {
+            requestId: req._id,
+            recipientId: req.recipientId,
+          });
+        }
+        return isValidRecipient;
+      })
       .map(req => req.recipientId);
-    console.log('Pending match IDs:', pendingMatchIds);
 
     const acceptedMatches = await User.find({ _id: { $in: acceptedMatchIds } }).select('-password');
+    console.log('Accepted matches found:', acceptedMatches.length);
     const pendingMatches = await User.find({ _id: { $in: pendingMatchIds } }).select('-password');
-
-    console.log('Matches - Accepted matches with avatars:', acceptedMatches.map(u => ({ id: u._id, avatar: u.avatar })));
-    console.log('Matches - Pending matches with avatars:', pendingMatches.map(u => ({ id: u._id, avatar: u.avatar })));
+    console.log('Pending matches found:', pendingMatches.length);
 
     const matchesWithStatus = [
       ...acceptedMatches.map(user => ({
         id: user._id.toString(),
         name: user.name,
-        avatar: user.avatar,
         university: user.university,
         bio: user.bio,
         location: user.location,
@@ -272,7 +309,6 @@ router.get('/matches', verifyTokenMiddleware, async (req, res) => {
       ...pendingMatches.map(user => ({
         id: user._id.toString(),
         name: user.name,
-        avatar: user.avatar,
         university: user.university,
         bio: user.bio,
         location: user.location,
@@ -282,6 +318,7 @@ router.get('/matches', verifyTokenMiddleware, async (req, res) => {
       })),
     ];
 
+    console.log('Returning matches with status:', matchesWithStatus.length);
     res.json(matchesWithStatus);
   } catch (err) {
     console.error('Get matches error:', err.message, err.stack);
@@ -289,26 +326,54 @@ router.get('/matches', verifyTokenMiddleware, async (req, res) => {
   }
 });
 
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', [
+  body('email').isEmail().withMessage('Valid email is required'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
   const { email } = req.body;
   try {
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ error: 'User not found' });
-
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
     user.resetPasswordToken = token;
     user.resetPasswordExpires = Date.now() + 3600000;
     await user.save();
-
-    console.log('Forgot password token generated for user:', user._id);
-    res.json({ message: 'Password reset email sent', token });
+    // Send email with reset link
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS,
+      },
+    });
+    const resetUrl = `${req.protocol}://${req.get('host')}/reset-password/${token}`;
+    const mailOptions = {
+      from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+      to: user.email,
+      subject: 'Password Reset Request',
+      text: `You requested a password reset. Click the link to reset your password: ${resetUrl}`,
+      html: `<p>You requested a password reset.</p><p>Click <a href='${resetUrl}'>here</a> to reset your password.</p>`
+    };
+    await transporter.sendMail(mailOptions);
+    console.log('Forgot password token generated and email sent for user:', user._id);
+    res.json({ message: 'Password reset email sent' });
   } catch (err) {
     console.error('Forgot password error:', err.message, err.stack);
     res.status(500).json({ error: 'Failed to process request' });
   }
 });
 
-router.post('/reset-password/:token', async (req, res) => {
+router.post('/reset-password/:token', [
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
+], async (req, res) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+
   const { token } = req.params;
   const { password } = req.body;
   try {
@@ -329,6 +394,48 @@ router.post('/reset-password/:token', async (req, res) => {
   } catch (err) {
     console.error('Reset password error:', err.message, err.stack);
     res.status(500).json({ error: 'Failed to reset password' });
+  }
+});
+
+// GET /api/users/subjects - Get all unique subject names
+router.get('/subjects', async (req, res) => {
+  try {
+    const subjects = await User.aggregate([
+      { $unwind: '$subjects' },
+      { $group: { _id: '$subjects.name' } },
+      { $sort: { _id: 1 } }
+    ]);
+    res.json(subjects.map(s => s._id));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch subjects' });
+  }
+});
+
+// GET /api/users/skills - Get all unique skills
+router.get('/skills', async (req, res) => {
+  try {
+    const skills = await User.aggregate([
+      { $unwind: '$skills' },
+      { $group: { _id: '$skills' } },
+      { $sort: { _id: 1 } }
+    ]);
+    res.json(skills.map(s => s._id));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch skills' });
+  }
+});
+
+// GET /api/users/badges - Get all unique badges
+router.get('/badges', async (req, res) => {
+  try {
+    const badges = await User.aggregate([
+      { $unwind: '$badges' },
+      { $group: { _id: '$badges' } },
+      { $sort: { _id: 1 } }
+    ]);
+    res.json(badges.map(b => b._id));
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch badges' });
   }
 });
 

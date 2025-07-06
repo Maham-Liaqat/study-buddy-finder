@@ -27,14 +27,14 @@ const ForgotPassword = () => {
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="container mx-auto p-6 flex justify-center items-center min-h-screen"
+      className="container mx-auto p-6 flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-lavender-100"
     >
-      <div className="bg-gray-900 text-white p-8 rounded-xl shadow-lg max-w-md w-full">
+      <div className="bg-white text-blue-900 p-8 rounded-2xl shadow-2xl max-w-md w-full border border-blue-100" style={{ fontFamily: 'Inter, Segoe UI, Roboto, Arial, sans-serif' }}>
         <motion.h1
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-4xl font-bold mb-6"
+          className="text-4xl font-extrabold mb-6 text-blue-700"
         >
           Forgot Password
         </motion.h1>

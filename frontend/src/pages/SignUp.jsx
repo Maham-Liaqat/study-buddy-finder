@@ -40,14 +40,14 @@ const SignUp = () => {
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="container mx-auto p-6 flex justify-center items-center min-h-screen"
+      className="container mx-auto p-6 flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 via-white to-lavender-100"
     >
-      <div className="bg-gray-900 text-white p-8 rounded-xl shadow-lg max-w-md w-full">
+      <div className="bg-white text-blue-900 p-8 rounded-2xl shadow-2xl max-w-md w-full border border-blue-100" style={{ fontFamily: 'Inter, Segoe UI, Roboto, Arial, sans-serif' }}>
         <motion.h1
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-4xl font-bold mb-6"
+          className="text-4xl font-extrabold mb-6 text-blue-700"
         >
           Sign Up
         </motion.h1>
@@ -64,7 +64,7 @@ const SignUp = () => {
               value={formData.name}
               onChange={handleChange}
               placeholder="Full Name"
-              className="p-3 bg-gray-700 text-white text-lg border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 w-full"
+              className="p-3 bg-blue-50 text-blue-900 text-lg border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
               required
             />
           </motion.div>
@@ -79,7 +79,7 @@ const SignUp = () => {
               value={formData.email}
               onChange={handleChange}
               placeholder="Email"
-              className="p-3 bg-gray-700 text-white text-lg border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 w-full"
+              className="p-3 bg-blue-50 text-blue-900 text-lg border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
               required
             />
           </motion.div>
@@ -94,7 +94,7 @@ const SignUp = () => {
               value={formData.password}
               onChange={handleChange}
               placeholder="Password"
-              className="p-3 bg-gray-700 text-white text-lg border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 w-full"
+              className="p-3 bg-blue-50 text-blue-900 text-lg border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
               required
             />
           </motion.div>
@@ -109,7 +109,7 @@ const SignUp = () => {
               value={formData.university}
               onChange={handleChange}
               placeholder="University"
-              className="p-3 bg-gray-700 text-white text-lg border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 w-full"
+              className="p-3 bg-blue-50 text-blue-900 text-lg border border-blue-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 w-full"
               required
             />
           </motion.div>
@@ -117,14 +117,14 @@ const SignUp = () => {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             type="submit"
-            className="px-6 py-3 bg-teal-500 text-white text-lg rounded-lg hover:bg-teal-600 transition"
+            className="px-6 py-3 bg-gradient-to-r from-blue-400 to-purple-400 text-white text-lg font-bold rounded-lg hover:from-blue-500 hover:to-purple-500 transition"
           >
             Sign Up
           </motion.button>
         </form>
-        <p className="mt-4 text-center text-lg">
+        <p className="mt-4 text-center text-lg text-blue-400">
           Already have an account?{' '}
-          <Link to="/login" className="text-teal-300 hover:underline">Login</Link>
+          <Link to="/login" className="text-purple-500 hover:underline font-semibold">Login</Link>
         </p>
       </div>
     </motion.div>

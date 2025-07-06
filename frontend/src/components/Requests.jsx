@@ -82,31 +82,46 @@ const Requests = () => {
     }
   };
 
-  if (loading) return <div className="container mx-auto p-6 min-h-screen bg-gray-100"><p className="text-lg text-gray-900">Loading requests...</p></div>;
-  if (error) return <div className="container mx-auto p-6 min-h-screen bg-gray-100"><p className="text-red-400 text-lg">{error}</p></div>;
+  if (loading) return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+        <p className="text-lg text-gray-700">Loading requests...</p>
+      </div>
+    </div>
+  );
+  
+  if (error) return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 flex items-center justify-center">
+      <div className="text-center">
+        <p className="text-red-500 text-lg">{error}</p>
+      </div>
+    </div>
+  );
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 50 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5 }}
-      className="container mx-auto p-6 min-h-screen bg-gray-100"
+      className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
     >
-      <div className="bg-gray-900 text-white p-8 rounded-xl shadow-lg max-w-2xl mx-auto">
+      <div className="container mx-auto mt-20 p-6">
+        <div className="bg-white/80 backdrop-blur-sm border border-blue-200/50 p-8 rounded-2xl shadow-xl max-w-2xl mx-auto">
         <motion.h1
           initial={{ y: -50, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
-          className="text-4xl font-bold mb-6"
+            className="text-4xl font-bold mb-6 text-center bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
         >
-          Requests
+            Connection Requests
         </motion.h1>
         {requests.length === 0 ? (
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.5 }}
-            className="text-lg"
+              className="text-lg text-gray-600 text-center"
           >
             No requests found.
           </motion.p>
@@ -120,17 +135,26 @@ const Requests = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
                   transition={{ duration: 0.3, delay: index * 0.1 }}
-                  className="p-4 bg-gray-700 rounded-lg"
+                    className="p-6 bg-white/60 backdrop-blur-sm border border-blue-200/30 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                 >
-                  <p className="text-lg">
+                    <p className="text-lg text-gray-800">
                     <strong>{request.isSent ? 'Sent to' : 'Received from'}:</strong>{' '}
-                    {request.isSent ? request.recipientName : request.senderName}
+                      <span className="text-blue-600 font-semibold">{request.isSent ? request.recipientName : request.senderName}</span>
                   </p>
                   {request.message && (
-                    <p className="text-lg"><strong>Message:</strong> {request.message}</p>
-                  )}
-                  <p className="text-lg"><strong>Status:</strong> {request.status}</p>
-                  <p className="text-lg"><strong>Date:</strong> {new Date(request.createdAt).toLocaleString()}</p>
+                      <p className="text-lg text-gray-700"><strong>Message:</strong> {request.message}</p>
+                    )}
+                    <p className="text-lg text-gray-700">
+                      <strong>Status:</strong> 
+                      <span className={`ml-2 px-3 py-1 rounded-full text-sm font-medium ${
+                        request.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                        request.status === 'accepted' ? 'bg-green-100 text-green-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        {request.status}
+                      </span>
+                    </p>
+                    <p className="text-lg text-gray-600"><strong>Date:</strong> {new Date(request.createdAt).toLocaleString()}</p>
                   {!request.isSent && request.status === 'pending' && (
                     <motion.div
                       initial={{ opacity: 0 }}
@@ -142,7 +166,7 @@ const Requests = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleAccept(request._id)}
-                        className="px-4 py-2 bg-teal-500 text-white text-lg rounded-lg hover:bg-teal-600 transition"
+                          className="px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-lg rounded-xl hover:shadow-lg transition-all duration-300 font-semibold"
                       >
                         Accept
                       </motion.button>
@@ -150,7 +174,7 @@ const Requests = () => {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleReject(request._id)}
-                        className="px-4 py-2 bg-red-500 text-white text-lg rounded-lg hover:bg-red-600 transition"
+                          className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white text-lg rounded-xl hover:shadow-lg transition-all duration-300 font-semibold"
                       >
                         Reject
                       </motion.button>
@@ -161,6 +185,7 @@ const Requests = () => {
             </AnimatePresence>
           </div>
         )}
+        </div>
       </div>
     </motion.div>
   );

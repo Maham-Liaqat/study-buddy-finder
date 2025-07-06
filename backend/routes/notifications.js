@@ -1,7 +1,11 @@
+const helmet = require('helmet');
+const { body, validationResult } = require('express-validator');
 const express = require('express');
 const router = express.Router();
 const { Notification, User } = require('../models');
 const verifyToken = require('../middleware/verifyToken');
+
+router.use(helmet());
 
 // Get notifications for the current user
 router.get('/', verifyToken, async (req, res) => {

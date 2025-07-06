@@ -9,9 +9,10 @@ const userSchema = new mongoose.Schema({
   location: { type: String },
   subjects: [{ name: { type: String, required: true } }],
   availability: [{ type: String }],
+  skills: [{ type: String }],
+  badges: [{ type: String }],
   resetPasswordToken: { type: String },
   resetPasswordExpires: { type: Date },
-  avatar: { type: String, default: 'https://via.placeholder.com/40?text=User' },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -34,15 +35,29 @@ const messageSchema = new mongoose.Schema({
   recipientId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   message: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
-  read: { type: Boolean, default: false }, // Added read field
+  read: { type: Boolean, default: false },
+  edited: { type: Boolean, default: false },
 });
 
 const notificationSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  type: { type: String, enum: ['message', 'request', 'match'], required: true },
+  type: { type: String, enum: ['message', 'request', 'match', 'session'], required: true },
   message: { type: String, required: true },
-  relatedUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  relatedUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  sessionId: { type: mongoose.Schema.Types.ObjectId, ref: 'Session' },
   read: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now },
+});
+
+const sessionSchema = new mongoose.Schema({
+  participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
+  title: { type: String, required: true },
+  description: { type: String },
+  startTime: { type: Date, required: true },
+  endTime: { type: Date, required: true },
+  location: { type: String },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  reminderSent: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 });
 
@@ -52,4 +67,5 @@ module.exports = {
   Match: mongoose.models.Match || mongoose.model('Match', matchSchema),
   Message: mongoose.models.Message || mongoose.model('Message', messageSchema),
   Notification: mongoose.models.Notification || mongoose.model('Notification', notificationSchema),
+  Session: mongoose.models.Session || mongoose.model('Session', sessionSchema),
 };

@@ -17,12 +17,84 @@
   }
 
   :root {
-    --primary-bg: #111827; /* bg-gray-900 */
-    --input-bg: #4b5563; /* bg-gray-700 */
-    --button-bg: #14b8a6; /* bg-teal-500 */
-    --button-hover-bg: #0d9488; /* bg-teal-600 */
-    --link-color: #5eead4; /* text-teal-300 */
-    --error-color: #f87171; /* text-red-400 */
+    --primary-bg: #f7faff; /* soft white-blue */
+    --input-bg: #e6e6fa; /* lavender */
+    --button-bg: #7ea6f7; /* soft blue */
+    --button-hover-bg: #5b8def; /* deeper blue */
+    --link-color: #8f5fe8; /* lavender accent */
+    --error-color: #e57373; /* soft red */
     --heading-size: 2.25rem; /* text-4xl */
     --text-size: 1.125rem; /* text-lg */
+    --gradient-bg: linear-gradient(135deg, #e6e6fa 0%, #f7faff 100%);
   }
+
+
+  .logo {
+    mix-blend-mode: screen; /* This removes black parts */
+    width: 200px; /* Adjust the size */
+    height: auto;
+  }
+
+/* ---- Custom FullCalendar Styles ---- */
+.fc {
+  background: var(--primary-bg, #f7faff);
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 24px 0 rgba(80, 112, 255, 0.08);
+  padding: 1.5rem 1rem;
+}
+.fc-toolbar-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  background: linear-gradient(90deg, #7ea6f7 0%, #b39ddb 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+.fc-button {
+  background: linear-gradient(90deg, #7ea6f7 0%, #b39ddb 100%);
+  color: #fff;
+  border: 1.5px solid #b3c6f7; /* soft blue border instead of none/black */
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px 0 rgba(80, 112, 255, 0.08);
+  transition: background 0.2s, box-shadow 0.2s, border 0.2s;
+}
+.fc-button:hover, .fc-button:focus {
+  background: linear-gradient(90deg, #5b8def 0%, #9575cd 100%);
+  box-shadow: 0 4px 16px 0 rgba(80, 112, 255, 0.16);
+  border: 1.5px solid #a5b4fc;
+}
+.fc-daygrid-day {
+  background: #f7faff;
+  border-radius: 0.75rem;
+  transition: background 0.2s;
+}
+.fc-daygrid-day:hover {
+  background: #e6e6fa;
+}
+.fc-day-today {
+  background: #e3f2fd !important;
+  border-radius: 0.75rem;
+  box-shadow: 0 0 0 2px #7ea6f7;
+}
+.fc-event {
+  background: linear-gradient(90deg, #7ea6f7 0%, #b39ddb 100%) !important;
+  color: #fff !important;
+  border: none !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 2px 8px 0 rgba(80, 112, 255, 0.08);
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+}
+.fc-scrollgrid {
+  border-radius: 1.5rem;
+  overflow: hidden;
+}
+
+body, html {
+  font-family: 'Roboto', Inter, Segoe UI, Arial, sans-serif;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Roboto', Inter, Segoe UI, Arial, sans-serif;
+  font-weight: 700;
+}
