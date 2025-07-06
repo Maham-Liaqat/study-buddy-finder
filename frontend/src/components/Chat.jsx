@@ -433,96 +433,96 @@ const Chat = () => {
       className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50"
     >
       <div className="container mx-auto mt-20 p-6 h-screen flex">
-        <motion.div
-          initial={{ x: -100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
+      <motion.div
+        initial={{ x: -100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
           className="w-1/3 bg-white/80 backdrop-blur-sm border border-blue-200/50 p-6 rounded-2xl shadow-xl mr-4"
-        >
+      >
           <h2 className="text-2xl font-bold mb-6 text-gray-800">Study Buddies</h2>
-          {error && !matches.length && !selectedMatch && (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+        {error && !matches.length && !selectedMatch && (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
               className="text-red-500 text-lg mb-4"
-            >
-              {error}
-            </motion.p>
-          )}
-          {matches.length ? (
+          >
+            {error}
+          </motion.p>
+        )}
+        {matches.length ? (
             <div className="space-y-3">
-              <AnimatePresence>
-                {matches.map((match, index) => (
-                  <motion.div
-                    key={match.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3, delay: index * 0.1 }}
-                    onClick={() => setSelectedMatch({ _id: match.id, name: match.name })}
+            <AnimatePresence>
+              {matches.map((match, index) => (
+                <motion.div
+                  key={match.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  onClick={() => setSelectedMatch({ _id: match.id, name: match.name })}
                     className={`p-4 rounded-xl cursor-pointer flex items-center justify-between space-x-3 transition-all duration-300 ${
                       selectedMatch?._id === match.id 
                         ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white shadow-lg' 
                         : 'bg-white/60 hover:bg-white/80 shadow-md hover:shadow-lg'
                     }`}
-                  >
-                    <div className="flex items-center space-x-3">
+                >
+                  <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
                         {match.name.split(' ').map(word => word[0]).join('')}
                       </div>
                       <span className="text-lg font-medium">{match.name}</span>
-                    </div>
-                    {unreadCounts[match.id]?.count > 0 && (
-                      <span className="bg-red-500 text-white text-sm font-bold px-2 py-1 rounded-full">
-                        {unreadCounts[match.id].count}
-                      </span>
-                    )}
-                  </motion.div>
-                ))}
-              </AnimatePresence>
-            </div>
-          ) : (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+                  </div>
+                  {unreadCounts[match.id]?.count > 0 && (
+                    <span className="bg-red-500 text-white text-sm font-bold px-2 py-1 rounded-full">
+                      {unreadCounts[match.id].count}
+                    </span>
+                  )}
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </div>
+        ) : (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
               className="text-lg text-gray-600 text-center"
-            >
-              No matches found. Try connecting with more study buddies!
-            </motion.p>
-          )}
-        </motion.div>
-        <motion.div
-          initial={{ x: 100, opacity: 0 }}
-          animate={{ x: 0, opacity: 1 }}
-          transition={{ delay: 0.2, duration: 0.5 }}
+          >
+            No matches found. Try connecting with more study buddies!
+          </motion.p>
+        )}
+      </motion.div>
+      <motion.div
+        initial={{ x: 100, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
           className="w-2/3 bg-white/80 backdrop-blur-sm border border-blue-200/50 p-6 rounded-2xl shadow-xl flex flex-col"
-        >
-          {selectedMatch ? (
-            <>
+      >
+        {selectedMatch ? (
+          <>
               <h2 className="text-2xl font-bold mb-6 text-gray-800">Chat with {selectedMatch.name}</h2>
-              {loadingMessages ? (
-                <motion.p
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: 0.3, duration: 0.5 }}
+            {loadingMessages ? (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.3, duration: 0.5 }}
                   className="text-lg text-gray-600"
-                >
-                  Loading chat...
-                </motion.p>
-              ) : (
-                <>
+              >
+                Loading chat...
+              </motion.p>
+            ) : (
+              <>
                   <div className="flex-1 overflow-y-auto p-4 bg-gray-50/50 rounded-xl mb-4">
-                    {messages.length === 0 ? (
+                  {messages.length === 0 ? (
                       <div className="text-gray-500 text-center">No messages yet. Start the conversation!</div>
-                    ) : (
-                      Object.entries(groupMessagesByDate(messages)).map(([date, msgs]) => (
-                        <div key={date}>
+                  ) : (
+                    Object.entries(groupMessagesByDate(messages)).map(([date, msgs]) => (
+                      <div key={date}>
                           <div className="text-center text-xs text-gray-400 my-2 bg-white/60 px-3 py-1 rounded-full inline-block mx-auto">{date}</div>
-                          {msgs.map((msg, idx) => (
-                            <div
-                              key={msg._id || idx}
+                        {msgs.map((msg, idx) => (
+                          <div
+                            key={msg._id || idx}
                               className={`flex ${msg.senderId === currentUserId ? 'justify-end' : 'justify-start'} mb-3`}
                             >
                               <div className={`max-w-xs px-4 py-3 rounded-2xl shadow-lg relative ${
@@ -530,106 +530,106 @@ const Chat = () => {
                                   ? 'bg-gradient-to-r from-blue-500 to-purple-500 text-white' 
                                   : 'bg-white text-gray-800 border border-gray-200'
                               }`}>
-                                {msg.fileUrl && (
+                              {msg.fileUrl && (
                                   <div className="mb-2">
-                                    {msg.fileType && msg.fileType.startsWith('image') ? (
-                                      <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
+                                  {msg.fileType && msg.fileType.startsWith('image') ? (
+                                    <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer">
                                         <img src={msg.fileUrl} alt={msg.fileName || 'file'} className="max-h-32 rounded-lg mb-1" />
-                                      </a>
-                                    ) : (
-                                      <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
-                                        <FaFileAlt />
-                                        <span>{msg.fileName || 'Download file'}</span>
-                                      </a>
-                                    )}
-                                  </div>
-                                )}
-                                {editingMsgId === msg._id ? (
+                                    </a>
+                                  ) : (
+                                    <a href={msg.fileUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-blue-600 hover:underline">
+                                      <FaFileAlt />
+                                      <span>{msg.fileName || 'Download file'}</span>
+                                    </a>
+                                  )}
+                                </div>
+                              )}
+                              {editingMsgId === msg._id ? (
                                   <div className="flex flex-col gap-2">
                                     <input value={editText} onChange={e => setEditText(e.target.value)} className="p-2 rounded-lg text-gray-800 border border-gray-300" />
                                     <div className="flex gap-2">
                                       <button onClick={() => handleEditSave(msg._id)} className="text-xs bg-green-500 text-white px-2 py-1 rounded">Save</button>
                                       <button onClick={() => setEditingMsgId(null)} className="text-xs bg-gray-500 text-white px-2 py-1 rounded">Cancel</button>
-                                    </div>
                                   </div>
-                                ) : (
-                                  <>
-                                    <div className="text-sm flex items-center gap-1">
-                                      {msg.message}
+                                </div>
+                              ) : (
+                                <>
+                                  <div className="text-sm flex items-center gap-1">
+                                    {msg.message}
                                       {msg.edited && <span className="text-xs opacity-75 ml-1">(edited)</span>}
-                                    </div>
+                                  </div>
                                     <div className="flex items-center gap-1 mt-2 text-xs opacity-75 justify-end">
-                                      {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                      {msg.senderId === currentUserId && msg._id && (
-                                        <>
+                                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {msg.senderId === currentUserId && msg._id && (
+                                      <>
                                           {msg.read ? <FaCheckDouble className="ml-1" title="Seen" /> : <FaCheck className="ml-1" title="Sent" />}
                                           <button onClick={() => handleEdit(msg)} className="ml-2 text-xs hover:underline">Edit</button>
                                           <button onClick={() => handleDelete(msg._id)} className="ml-1 text-xs hover:underline">Delete</button>
-                                        </>
-                                      )}
-                                    </div>
-                                  </>
-                                )}
-                              </div>
+                                      </>
+                                    )}
+                                  </div>
+                                </>
+                              )}
                             </div>
-                          ))}
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  {otherTyping && (
-                    <div className="text-xs text-gray-500 mb-2 italic">{selectedMatch.name} is typing...</div>
+                          </div>
+                        ))}
+                      </div>
+                    ))
                   )}
-                  <motion.div
-                    initial={{ scale: 0.95, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.4, duration: 0.5 }}
+                </div>
+                {otherTyping && (
+                    <div className="text-xs text-gray-500 mb-2 italic">{selectedMatch.name} is typing...</div>
+                )}
+                <motion.div
+                  initial={{ scale: 0.95, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.4, duration: 0.5 }}
                     className="flex gap-3"
-                  >
-                    <input
-                      type="text"
-                      value={newMessage}
-                      onChange={handleInputChange}
-                      placeholder="Type a message..."
+                >
+                  <input
+                    type="text"
+                    value={newMessage}
+                    onChange={handleInputChange}
+                    placeholder="Type a message..."
                       className="flex-1 p-3 bg-white/70 border border-blue-200 text-gray-800 text-lg rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300"
-                    />
-                    <motion.button
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={handleSendMessage}
+                  />
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleSendMessage}
                       className="px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-lg rounded-xl hover:shadow-lg transition-all duration-300 font-semibold"
-                    >
-                      Send
-                    </motion.button>
-                  </motion.div>
+                  >
+                    Send
+                  </motion.button>
+                </motion.div>
                   <div className="flex items-center gap-3 mt-3">
                     <label className="cursor-pointer flex items-center gap-2 text-blue-600 hover:text-blue-700 transition-colors">
                       <FaPaperclip className="text-lg" />
-                      <input type="file" className="hidden" onChange={handleFileChange} disabled={uploading} />
+                    <input type="file" className="hidden" onChange={handleFileChange} disabled={uploading} />
                       {uploading && <span className="text-xs">Uploading...</span>}
-                    </label>
-                    {file && (
+                  </label>
+                  {file && (
                       <span className="flex items-center gap-2 bg-blue-50 text-blue-800 px-3 py-2 rounded-lg border border-blue-200">
-                        {file.type && file.type.startsWith('image') ? <FaFileImage /> : <FaFileAlt />}
-                        <span className="truncate max-w-xs">{file.name}</span>
+                      {file.type && file.type.startsWith('image') ? <FaFileImage /> : <FaFileAlt />}
+                      <span className="truncate max-w-xs">{file.name}</span>
                         <button onClick={() => setFile(null)} className="ml-1 text-red-500 hover:text-red-700">&times;</button>
-                      </span>
-                    )}
-                  </div>
-                </>
-              )}
-            </>
-          ) : (
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.3, duration: 0.5 }}
+                    </span>
+                  )}
+                </div>
+              </>
+            )}
+          </>
+        ) : (
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.5 }}
               className="text-lg text-gray-600 text-center"
-            >
+          >
               Select a study buddy to start chatting.
-            </motion.p>
-          )}
-        </motion.div>
+          </motion.p>
+        )}
+      </motion.div>
       </div>
     </motion.div>
   );

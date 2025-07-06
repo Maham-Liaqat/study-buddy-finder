@@ -5,7 +5,7 @@ import { AuthProvider, AuthContext } from './context/AuthContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Home from './components/Home';
 import Login from './components/Login';
-import Signup from './pages/Signup';
+import SignUp from './pages/SignUp';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './components/Dashboard';
 import Profile from './components/Profile';
@@ -50,7 +50,7 @@ const App = () => {
                     <Routes>
                       <Route path="/" element={<Home />} />
                       <Route path="/login" element={token ? <Navigate to="/dashboard" /> : <Login />} />
-                      <Route path="/signup" element={token ? <Navigate to="/dashboard" /> : <Signup />} />
+                      <Route path="/signup" element={token ? <Navigate to="/dashboard" /> : <SignUp />} />
                       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
                       <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
                       <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />

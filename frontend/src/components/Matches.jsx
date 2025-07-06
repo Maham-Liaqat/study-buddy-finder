@@ -86,16 +86,16 @@ const Matches = () => {
           My Study Buddies
         </motion.h1>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {matches.map((match, index) => (
-            <motion.div
-              key={match.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
+          <motion.div
+            key={match.id}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.3, delay: index * 0.1 }}
               className="bg-white/80 backdrop-blur-sm border border-blue-200/50 p-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300"
-            >
-              <div className="flex items-center space-x-4 mb-4">
+          >
+            <div className="flex items-center space-x-4 mb-4">
                 <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold shadow-lg">
                   {match.name.split(' ').map(word => word[0]).join('')}
                 </div>
@@ -109,23 +109,23 @@ const Matches = () => {
                 <p className="text-gray-600">📍 {match.location || 'Location not specified'}</p>
                 <p className="text-gray-600">📚 {match.subjects?.join(', ') || 'No subjects specified'}</p>
                 <p className="text-gray-600">⏰ {match.availability?.join(', ') || 'No availability specified'}</p>
-              </div>
-              {match.connectionStatus === 'accepted' ? (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={() => handleChat(match.id)}
+            </div>
+            {match.connectionStatus === 'accepted' ? (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => handleChat(match.id)}
                   className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300"
-                >
+              >
                   Start Chat
-                </motion.button>
-              ) : (
+              </motion.button>
+            ) : (
                 <div className="w-full bg-gradient-to-r from-yellow-400 to-orange-400 text-white py-3 px-6 rounded-xl font-semibold text-center shadow-lg">
                   Request Pending
                 </div>
-              )}
-            </motion.div>
-          ))}
+            )}
+          </motion.div>
+        ))}
         </div>
       </div>
     </motion.div>
