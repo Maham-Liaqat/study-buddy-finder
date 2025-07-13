@@ -58,7 +58,10 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Security: CORS
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:5173'];
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://study-buddy-finder-pi.vercel.app'
+];
 app.use(cors({
   origin: function (origin, callback) {
     if (!origin || allowedOrigins.indexOf(origin) !== -1) {
