@@ -1,7 +1,7 @@
 // Environment configuration for Vite
 const config = {
-  API_URL: import.meta.env.VITE_API_URL || 'http://localhost:5001',
-  SOCKET_URL: import.meta.env.VITE_SOCKET_URL || 'http://localhost:5001',
+  API_URL: "https://study-buddy-finder-hfwo.onrender.com", // updated to deployed backend
+  SOCKET_URL: "https://study-buddy-finder-hfwo.onrender.com", // updated to deployed backend
   NODE_ENV: import.meta.env.MODE || 'development',
 };
 
